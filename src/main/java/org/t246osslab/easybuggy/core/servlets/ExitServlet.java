@@ -14,7 +14,7 @@ public class ExitServlet extends AbstractServlet {
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse res) throws ServletException, IOException {
 
-        log.info("EasyBuggy is successfully shut down by a /exit request.");
-        System.exit(0);
+        log.warn("Shutdown request received at /exit but direct termination is disabled.");
+        res.sendError(HttpServletResponse.SC_FORBIDDEN, "Shutdown via HTTP endpoint is disabled.");
     }
 }

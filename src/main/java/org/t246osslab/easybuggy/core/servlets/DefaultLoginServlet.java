@@ -27,6 +27,7 @@ import org.t246osslab.easybuggy.core.utils.ApplicationUtils;
 @WebServlet(urlPatterns = { "/login" })
 public class DefaultLoginServlet extends AbstractServlet {
     
+    private static final String DEFAULT_ADMIN_PATH = "/admins/main";
     /* User's login history using in-memory account locking */
     private static ConcurrentHashMap<String, User> userLoginHistory = new ConcurrentHashMap<String, User>();
     
@@ -98,10 +99,15 @@ public class DefaultLoginServlet extends AbstractServlet {
             
             String target = (String) session.getAttribute("target");
             if (target == null) {
-                res.sendRedirect("/admins/main");
+                res.sendRedirect(req.getContextPath() + DEFAULT_ADMIN_PATH);
             } else {
                 session.removeAttribute("target");
-                res.sendRedirect(target);
+                if (isSafeRedirectTarget(target)) {
+                    res.sendRedirect(req.getContextPath() + target);
+                } else {
+                    log.warn("Blocked unsafe redirect target: " + target);
+                    res.sendRedirect(req.getContextPath() + DEFAULT_ADMIN_PATH);
+                }
             }
             return;
         } else {
@@ -172,6 +178,19 @@ public class DefaultLoginServlet extends AbstractServlet {
             }
         }
         return admin;
+    }
+
+    private boolean isSafeRedirectTarget(String target) {
+        if (target == null) {
+            return false;
+        }
+        if (!target.startsWith("/")) {
+            return false;
+        }
+        if (target.contains("://") || target.contains("\\") || target.contains("%5c")) {
+            return false;
+        }
+        return true;
     }
 
 }
